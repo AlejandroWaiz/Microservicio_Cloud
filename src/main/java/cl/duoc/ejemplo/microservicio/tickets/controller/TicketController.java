@@ -59,7 +59,8 @@ public class TicketController {
      * Listar tickets por evento
      */
     @GetMapping(params = "eventoId")
-    public ResponseEntity<List<Ticket>> listarPorEvento(@RequestParam Long eventoId) {
+    public ResponseEntity<List<Ticket>> listarPorEvento(@RequestParam("eventoId") Long eventoId) {
+        System.out.println(">>> /tickets?eventoId=" + eventoId);
         List<Ticket> tickets = ticketService.buscarPorEvento(eventoId);
         return ResponseEntity.ok(tickets);
     }
