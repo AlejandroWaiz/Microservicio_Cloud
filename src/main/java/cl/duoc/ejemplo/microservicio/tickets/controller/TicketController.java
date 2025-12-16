@@ -1,5 +1,6 @@
 package cl.duoc.ejemplo.microservicio.tickets.controller;
 
+import cl.duoc.ejemplo.microservicio.tickets.messaging.TicketPublisher;
 import cl.duoc.ejemplo.microservicio.tickets.model.Ticket;
 import cl.duoc.ejemplo.microservicio.tickets.model.TicketEstadisticasDto;
 import cl.duoc.ejemplo.microservicio.tickets.service.S3TicketStorageService;
@@ -20,11 +21,14 @@ public class TicketController {
 
     private final TicketService ticketService;
     private final S3TicketStorageService s3Service;
+    private final TicketPublisher publisher;
 
     public TicketController(TicketService ticketService,
-                            S3TicketStorageService s3Service) {
+            S3TicketStorageService s3Service,
+            cl.duoc.ejemplo.microservicio.tickets.messaging.TicketPublisher publisher) {
         this.ticketService = ticketService;
         this.s3Service = s3Service;
+        this.publisher = publisher;
     }
 
     /**
@@ -33,6 +37,11 @@ public class TicketController {
     @PostMapping
     public ResponseEntity<Ticket> crearTicket(@RequestBody Ticket ticket) {
         Ticket creado = ticketService.crearTicket(ticket);
+        if (creado.getPrecio().signum() <= 0) {
+            publisher.publishTicket(creado);
+            return ResponseEntity.badRequest().build();
+        }
+        publisher.publishTicket(creado); 
         return ResponseEntity.status(HttpStatus.CREATED).body(creado);
     }
 
@@ -70,7 +79,7 @@ public class TicketController {
      */
     @PutMapping("/{id}")
     public ResponseEntity<Ticket> actualizarTicket(@PathVariable Long id,
-                                                   @RequestBody Ticket cambios) {
+            @RequestBody Ticket cambios) {
         Ticket actualizado = ticketService.actualizarTicket(id, cambios);
         if (actualizado == null) {
             return ResponseEntity.notFound().build();
@@ -95,7 +104,7 @@ public class TicketController {
      */
     @PostMapping("/{id}/upload")
     public ResponseEntity<String> subirArchivoTicket(@PathVariable Long id,
-                                                     @RequestParam("file") MultipartFile file) {
+            @RequestParam("file") MultipartFile file) {
         try {
             if (ticketService.obtenerPorId(id).isEmpty()) {
                 return ResponseEntity.notFound().build();
