@@ -1,7 +1,6 @@
 version: "3.8"
 
 services:
-
   rabbitmq:
     image: rabbitmq:3-management
     container_name: rabbitmq
@@ -21,3 +20,6 @@ services:
       - rabbitmq
     environment:
       SPRING_RABBITMQ_HOST: rabbitmq
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+      AWS_REGION: ${AWS_REGION}
